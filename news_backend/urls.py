@@ -6,6 +6,7 @@ from django.urls import path
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
+from django.urls import path, include
 import os
 
 
@@ -42,5 +43,11 @@ urlpatterns = [
 
     # S3 upload test
     path('test-s3-upload/', test_s3_upload),
+
+    # API Routes
+    # API routes
+    path('api/categories/', include('categories.api_urls')),
+    path('api/news/', include('news.api_urls')),
+    path('api/authors/', include('authors.api_urls')),  # we'll create authors.api_urls below
 ]
 
