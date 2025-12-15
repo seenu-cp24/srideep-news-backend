@@ -1,104 +1,138 @@
 """
-API Views for the News module — optimized, clean, and production-ready.
+API Views for the News module — stable, clean, and production-ready.
+(NO role-based logic for now)
 """
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.db.models import Q
+
 from .models import NewsArticle
 from .serializers import NewsListSerializer, NewsDetailSerializer
+from .permissions import IsAdminOrReadOnly, IsAuthenticatedOrReadOnly
 
 
-# ----------------------------------------------------------------------
-# Pagination Settings
-# ----------------------------------------------------------------------
+# -------------------------------------------------
+# Pagination
+# -------------------------------------------------
 class StandardResultsSetPagination(PageNumberPagination):
     page_size = 10
     page_size_query_param = "page_size"
     max_page_size = 100
 
 
-# ----------------------------------------------------------------------
-# News List API
-# ----------------------------------------------------------------------
+# -------------------------------------------------
+# NEWS LIST (PUBLIC READ, AUTH WRITE)
+# -------------------------------------------------
 class NewsListAPI(APIView):
     """
-    Returns paginated list of all published news.
-    Optional search using ?q=keyword
+    GET  → Public
+    POST → Authenticated users
     """
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
     def get(self, request):
-        qs = (
+        queryset = (
             NewsArticle.objects.filter(status="published")
             .select_related("category", "author")
             .order_by("-published_at")
         )
 
-        # Optional search
         q = request.GET.get("q")
         if q:
-            qs = qs.filter(
+            queryset = queryset.filter(
                 Q(title__icontains=q)
                 | Q(summary__icontains=q)
                 | Q(content__icontains=q)
             )
 
         paginator = StandardResultsSetPagination()
-        page = paginator.paginate_queryset(qs, request)
-        serializer = NewsListSerializer(
-            page, many=True, context={"request": request}
-        )
+        page = paginator.paginate_queryset(queryset, request)
 
+        serializer = NewsListSerializer(
+            page,
+            many=True,
+            context={"request": request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
+    def post(self, request):
+        serializer = NewsDetailSerializer(
+            data=request.data,
+            context={"request": request}
+        )
 
-# ----------------------------------------------------------------------
-# News Detail API (with Related Articles)
-# ----------------------------------------------------------------------
+        if serializer.is_valid():
+            serializer.save(author=request.user.author)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# -------------------------------------------------
+# NEWS DETAIL (PUBLIC READ)
+# -------------------------------------------------
 class NewsDetailAPI(APIView):
-    """
-    Returns full details of a news article and 5 related articles.
-    """
+    permission_classes = []
+
     def get(self, request, slug):
-        # Current article
-        obj = get_object_or_404(
+        article = get_object_or_404(
             NewsArticle.objects.select_related("category", "author"),
-            slug=slug, status="published"
+            slug=slug,
+            status="published"
         )
 
-        data = NewsDetailSerializer(obj, context={"request": request}).data
+        serializer = NewsDetailSerializer(
+            article,
+            context={"request": request}
+        )
+        return Response(serializer.data)
 
-        # Related Articles — Same category
-        related = (
-            NewsArticle.objects.filter(
-                status="published",
-                category=obj.category
-            )
-            .exclude(id=obj.id)
-            .order_by("-published_at")[:5]
+
+# -------------------------------------------------
+# NEWS UPDATE / DELETE (ADMIN ONLY)
+# -------------------------------------------------
+class NewsUpdateDeleteAPI(APIView):
+    permission_classes = [IsAdminOrReadOnly]
+
+    def put(self, request, slug):
+        article = get_object_or_404(NewsArticle, slug=slug)
+
+        serializer = NewsDetailSerializer(
+            article,
+            data=request.data,
+            partial=True,
+            context={"request": request}
         )
 
-        related_serialized = NewsListSerializer(
-            related, many=True, context={"request": request}
-        ).data
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
 
-        return Response({
-            "article": data,
-            "related_articles": related_serialized
-        })
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, slug):
+        article = get_object_or_404(NewsArticle, slug=slug)
+        article.delete()
+
+        return Response(
+            {"detail": "Deleted successfully"},
+            status=status.HTTP_204_NO_CONTENT
+        )
 
 
-# ----------------------------------------------------------------------
-# News by Category API
-# ----------------------------------------------------------------------
+# -------------------------------------------------
+# NEWS BY CATEGORY (PUBLIC)
+# -------------------------------------------------
 class NewsByCategoryAPI(APIView):
-    """
-    Returns paginated news list for a specific category.
-    """
+    permission_classes = []
+
     def get(self, request, category_slug):
-        qs = (
+        queryset = (
             NewsArticle.objects.filter(
                 status="published",
                 category__slug=category_slug
@@ -108,60 +142,62 @@ class NewsByCategoryAPI(APIView):
         )
 
         paginator = StandardResultsSetPagination()
-        page = paginator.paginate_queryset(qs, request)
-        serializer = NewsListSerializer(
-            page, many=True, context={"request": request}
-        )
+        page = paginator.paginate_queryset(queryset, request)
 
+        serializer = NewsListSerializer(
+            page,
+            many=True,
+            context={"request": request}
+        )
         return paginator.get_paginated_response(serializer.data)
 
 
-# ----------------------------------------------------------------------
-# Latest News API
-# ----------------------------------------------------------------------
+# -------------------------------------------------
+# LATEST NEWS (PUBLIC)
+# -------------------------------------------------
 class LatestNewsAPI(APIView):
-    """
-    Returns the latest N news items.
-    Usage: /api/news/latest/?limit=10
-    """
+    permission_classes = []
+
     def get(self, request):
         try:
             limit = int(request.GET.get("limit", 5))
-            limit = max(1, min(limit, 50))  # clamp between 1 and 50
-        except ValueError:
+            limit = max(1, min(limit, 50))
+        except (TypeError, ValueError):
             limit = 5
 
-        qs = (
+        queryset = (
             NewsArticle.objects.filter(status="published")
             .select_related("category", "author")
             .order_by("-published_at")[:limit]
         )
 
         serializer = NewsListSerializer(
-            qs, many=True, context={"request": request}
+            queryset,
+            many=True,
+            context={"request": request}
         )
         return Response(serializer.data)
 
 
-# ----------------------------------------------------------------------
-# Featured News API
-# ----------------------------------------------------------------------
+# -------------------------------------------------
+# FEATURED NEWS (PUBLIC)
+# -------------------------------------------------
 class FeaturedNewsAPI(APIView):
-    """
-    Returns news that have featured images.
-    Limit = 10 articles.
-    """
+    permission_classes = []
+
     def get(self, request):
-        qs = (
+        queryset = (
             NewsArticle.objects.filter(
                 status="published",
-                featured_image__isnull=False
+                is_featured=True
             )
             .select_related("category", "author")
             .order_by("-published_at")[:10]
         )
 
         serializer = NewsListSerializer(
-            qs, many=True, context={"request": request}
+            queryset,
+            many=True,
+            context={"request": request}
         )
         return Response(serializer.data)
