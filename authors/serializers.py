@@ -6,12 +6,17 @@ class AuthorSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Author
-        fields = ["id", "name", "bio", "photo_url"]
+        fields = [
+            "id",
+            "name",
+            "bio",
+            "photo_url",
+        ]
 
     def get_photo_url(self, obj):
         if obj.photo:
             try:
                 return obj.photo.url
-            except Exception:
+            except:
                 return None
         return None

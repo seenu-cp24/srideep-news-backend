@@ -19,19 +19,25 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
 # INSTALLED APPS
 # -----------------------------------
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'storages',
-    'categories',
-    'authors',
-    'news',
-    'rest_framework',
+    # Django core
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
 
+    # Third-party
+    "rest_framework",
+    "drf_yasg",          # ✅ REQUIRED for Swagger & ReDoc
+    "storages",
+
+    # Project apps
+    "categories",
+    "authors",
+    "news",
 ]
+
 
 # -----------------------------------
 # MIDDLEWARE
@@ -56,21 +62,29 @@ ROOT_URLCONF = "news_backend.urls"  # change if backend name is different
 # -----------------------------------
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+
+        # Custom template directory for overriding templates if needed
+        "DIRS": [
+            BASE_DIR / "templates",
+        ],
+
+        "APP_DIRS": True,
+
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-# -----------------------------------
+
+
+#------------------------------------
 # WSGI
 # -----------------------------------
 WSGI_APPLICATION = "news_backend.wsgi.application"  # change if backend name is different
@@ -106,8 +120,13 @@ USE_TZ = True
 # -----------------------------------
 # STATIC FILES
 # -----------------------------------
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# Static files (CSS, JS, images)
+STATIC_URL = '/static/'
+STATIC_ROOT = '/var/www/srideep_backend/static/'
+
+# Django Rest Framework / Swagger static files
+STATICFILES_DIRS = []
+
 
 # -----------------------------------
 # MEDIA STORAGE USING S3 + CLOUDFRONT
@@ -156,4 +175,26 @@ LOGGING = {
         "handlers": ["console"],
         "level": "INFO",
     },
+}
+
+
+#-----------------
+#REST FRAME WORK
+#----------------
+REST_FRAMEWORK = {
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+    ],
+
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.AllowAny",
+    ],
+
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
 }

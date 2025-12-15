@@ -1,18 +1,30 @@
-"""
-URL configuration for news_backend project.
-"""
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from django.http import JsonResponse
 from django.core.files.storage import default_storage
 from django.core.files.base import ContentFile
-from django.urls import path, include
 import os
 
+# -----------------------------------
+# Swagger / Redoc Documentation
+# -----------------------------------
+from drf_yasg.views import get_schema_view
+from drf_yasg import openapi
+from rest_framework import permissions
 
-# ---------------------------
-# ENV TEST ENDPOINT
-# ---------------------------
+schema_view = get_schema_view(
+    openapi.Info(
+        title="Srideep News API",
+        default_version='v1',
+        description="API Documentation for Srideep News Platform",
+    ),
+    public=True,
+    permission_classes=(permissions.AllowAny,),
+)
+
+# -----------------------------------
+# ENV TEST
+# -----------------------------------
 def test_env(request):
     return JsonResponse({
         "AWS_ACCESS_KEY_ID": os.environ.get("AWS_ACCESS_KEY_ID"),
@@ -23,31 +35,32 @@ def test_env(request):
     })
 
 
-# ---------------------------
-# S3 UPLOAD TEST ENDPOINT
-# ---------------------------
+# -----------------------------------
+# S3 UPLOAD TEST
+# -----------------------------------
 def test_s3_upload(request):
     filename = "media/test_upload_final.txt"
     default_storage.save(filename, ContentFile("S3 WORKING"))
     return JsonResponse({"status": "ok", "file": filename})
 
 
-# ---------------------------
+# -----------------------------------
 # URL ROUTING
-# ---------------------------
+# -----------------------------------
 urlpatterns = [
-    path('admin/', admin.site.urls),
 
-    # Environment variable test
-    path('test-env/', test_env),
+    # IMPORTANT — swagger must be at the top
+    path("swagger/", schema_view.with_ui('swagger', cache_timeout=0), name="schema-swagger-ui"),
+    path("redoc/", schema_view.with_ui('redoc', cache_timeout=0), name="schema-redoc"),
 
-    # S3 upload test
-    path('test-s3-upload/', test_s3_upload),
+    path("admin/", admin.site.urls),
+
+    # Test URLs
+    path("test-env/", test_env),
+    path("test-s3-upload/", test_s3_upload),
 
     # API Routes
-    # API routes
-    path('api/categories/', include('categories.api_urls')),
-    path('api/news/', include('news.api_urls')),
-    path('api/authors/', include('authors.api_urls')),  # we'll create authors.api_urls below
+    path("api/categories/", include("categories.api_urls")),
+    path("api/news/", include("news.api_urls")),
+    path("api/authors/", include("authors.api_urls")),
 ]
-
