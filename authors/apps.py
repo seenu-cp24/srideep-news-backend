@@ -12,10 +12,12 @@ class AuthorsConfig(AppConfig):
 
         def create_author(sender, instance, created, **kwargs):
             if created:
-                Author.objects.create(
+                Author.objects.get_or_create(
                     user=instance,
-                    name=instance.username,
-                    role="admin" if instance.is_superuser else "reporter"
+                    defaults={
+                        "name": instance.get_full_name() or instance.username,
+                        "role": "admin" if instance.is_superuser else "reporter",
+                    }
                 )
 
         post_save.connect(create_author, sender=User)

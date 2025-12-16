@@ -5,10 +5,9 @@ from .models import Author
 
 
 @receiver(post_save, sender=User)
-def create_author_for_user(sender, instance, created, **kwargs):
+def create_author_profile(sender, instance, created, **kwargs):
     if created:
         Author.objects.create(
             user=instance,
-            name=instance.username,
-            role="admin" if instance.is_superuser else "reporter"
+            name=instance.get_full_name() or instance.username
         )

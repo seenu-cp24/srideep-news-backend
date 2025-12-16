@@ -8,8 +8,10 @@ from authors.models import Author
 class NewsArticle(models.Model):
     STATUS_CHOICES = (
         ("draft", "Draft"),
+        ("review", "Under Review"),
         ("published", "Published"),
     )
+
 
     # ---------------------------------------------------
     # Basic Content

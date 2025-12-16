@@ -1,15 +1,18 @@
 from rest_framework.permissions import BasePermission, SAFE_METHODS
 
 
-class IsAdminOrReadOnly(BasePermission):
+class IsAdminEditorReporter(BasePermission):
     """
-    - Public: READ only
-    - Admin (is_staff or is_superuser): FULL access
+    Role-based permission:
+    - Admin: full access
+    - Editor: create & update
+    - Reporter: create drafts only
+    - Public: read-only
     """
 
     def has_permission(self, request, view):
 
-        # Public read-only access
+        # Public read access
         if request.method in SAFE_METHODS:
             return True
 
@@ -17,19 +20,10 @@ class IsAdminOrReadOnly(BasePermission):
         if not request.user or not request.user.is_authenticated:
             return False
 
-        # Admin users only for write
-        return request.user.is_staff or request.user.is_superuser
+        # Must have author profile
+        if not hasattr(request.user, "author_profile"):
+            return False
 
+        role = request.user.author_profile.role
 
-class IsAuthenticatedOrReadOnly(BasePermission):
-    """
-    - Public: READ only
-    - Authenticated users: CREATE only (no update/delete)
-    """
-
-    def has_permission(self, request, view):
-
-        if request.method in SAFE_METHODS:
-            return True
-
-        return request.user and request.user.is_authenticated
+        return role in ["admin", "editor", "reporter"]

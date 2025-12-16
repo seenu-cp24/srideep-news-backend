@@ -44,6 +44,36 @@ urlpatterns = [
     ),
 
     # -------------------------------------------------
+    # My Articles (JWT)
+    # -------------------------------------------------
+    path(
+        "manage/my-articles/",
+        api_views.MyArticlesAPI.as_view(),
+        name="news-my-articles"
+    ),
+    path("manage/create/", api_views.NewsCreateAPI.as_view()),
+    path("manage/<slug:slug>/", api_views.NewsUpdateDeleteAPI.as_view()),
+
+
+    # -------------------------------------------------
+    # Workflow APIs
+    # -------------------------------------------------
+    path(
+        "manage/submit/<slug:slug>/",
+        api_views.SubmitForReviewAPI.as_view(),
+        name="news-submit-review"
+    ),
+
+    path(
+        "manage/publish/<slug:slug>/",
+        api_views.PublishArticleAPI.as_view(),
+        name="news-publish"
+    ),
+
+
+
+
+    # -------------------------------------------------
     # News Detail (GET / PUT / DELETE)
     # -------------------------------------------------
     path(
@@ -51,4 +81,7 @@ urlpatterns = [
         api_views.NewsDetailAPI.as_view(),
         name="news-detail"
     ),
+
+
+
 ]
