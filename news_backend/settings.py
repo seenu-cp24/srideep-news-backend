@@ -19,6 +19,7 @@ ALLOWED_HOSTS = os.environ.get("DJANGO_ALLOWED_HOSTS", "").split(",")
 # INSTALLED APPS
 # -----------------------------------
 INSTALLED_APPS = [
+    "corsheaders",   # 👈 ADD THIS
     # Django
     'django.contrib.admin',
     'django.contrib.auth',
@@ -45,6 +46,7 @@ INSTALLED_APPS = [
 # MIDDLEWARE
 # -----------------------------------
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",  # 👈 MUST BE AT TOP
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -222,3 +224,30 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
 }
+
+# -----------------------------------
+# CORS SETTINGS (Frontend Access)
+# -----------------------------------
+
+CORS_ALLOW_ALL_ORIGINS = False
+
+CORS_ALLOWED_ORIGINS = [
+    "http://13.204.210.113:5173",   # Vite via IP
+    "http://localhost:5173",        # Local dev
+    "https://srideepcomputers.com", # Future frontend domain
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Allow headers needed by Axios
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
