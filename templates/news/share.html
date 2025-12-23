@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+
+    <title>{{ article.seo_title|default:article.title }}</title>
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="article" />
+    <meta property="og:title" content="{{ article.title }}" />
+    <meta property="og:description" content="{{ article.summary }}" />
+    <meta property="og:image" content="{{ article.featured_image.url }}" />
+    <meta property="og:url" content="{{ share_url }}" />
+    <meta property="og:site_name" content="Srideep News" />
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{ article.title }}" />
+    <meta name="twitter:description" content="{{ article.summary }}" />
+    <meta name="twitter:image" content="{{ article.featured_image.url }}" />
+
+    <!-- Redirect real users -->
+    <meta http-equiv="refresh" content="2;url={{ share_url }}" />
+</head>
+<body>
+    Redirecting…
+</body>
+</html>

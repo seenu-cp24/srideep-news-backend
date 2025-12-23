@@ -1,3 +1,8 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
+from .models import NewsArticle
 
-# Create your views here.
+def article_share_view(request, slug):
+    article = get_object_or_404(NewsArticle, slug=slug)
+    return render(request, "news/article_share.html", {
+        "article": article
+    })

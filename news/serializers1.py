@@ -3,7 +3,7 @@ Serializers for News module — optimized for frontend UI, SEO, and API performa
 """
 
 from rest_framework import serializers
-from .models import NewsArticle, GalleryImage
+from .models import NewsArticle
 from authors.serializers import AuthorSerializer
 from categories.serializers import CategorySerializer
 
@@ -14,33 +14,6 @@ def pretty_date(dt):
     return dt.strftime("%d %b %Y, %I:%M %p")
 
 
-# -------------------------------------------------
-# GALLERY IMAGE SERIALIZER (NEW)
-# -------------------------------------------------
-class GalleryImageSerializer(serializers.ModelSerializer):
-    image_url = serializers.SerializerMethodField()
-
-    class Meta:
-        model = GalleryImage
-        fields = [
-            "id",
-            "image_url",
-            "caption",
-            "order",
-        ]
-
-    def get_image_url(self, obj):
-        try:
-            if obj.image:
-                return obj.image.url
-        except:
-            pass
-        return None
-
-
-# -------------------------------------------------
-# NEWS LIST SERIALIZER (UNCHANGED)
-# -------------------------------------------------
 class NewsListSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
@@ -76,14 +49,10 @@ class NewsListSerializer(serializers.ModelSerializer):
         return pretty_date(obj.published_at)
 
 
-# -------------------------------------------------
-# NEWS DETAIL SERIALIZER (UPDATED)
-# -------------------------------------------------
 class NewsDetailSerializer(serializers.ModelSerializer):
     author = AuthorSerializer(read_only=True)
     category = CategorySerializer(read_only=True)
     featured_image_url = serializers.SerializerMethodField()
-    gallery_images = GalleryImageSerializer(many=True, read_only=True)
     read_time = serializers.IntegerField(source="reading_time", read_only=True)
     published_on = serializers.SerializerMethodField()
     updated_on = serializers.SerializerMethodField()
@@ -99,7 +68,6 @@ class NewsDetailSerializer(serializers.ModelSerializer):
             "category",
             "author",
             "featured_image_url",
-            "gallery_images",     # ✅ NEW
             "published_on",
             "updated_on",
             "read_time",

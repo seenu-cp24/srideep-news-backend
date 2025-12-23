@@ -1,10 +1,26 @@
+from django.shortcuts import get_object_or_404, redirect
 from django.http import HttpResponse
-from django.core.files.storage import default_storage
-from django.core.files.base import ContentFile
+from django.template.loader import render_to_string
 
-def test_s3(request):
-    try:
-        default_storage.save("media_test.txt", ContentFile("S3 upload successful"))
-        return HttpResponse("S3 upload OK")
-    except Exception as e:
-        return HttpResponse(f"S3 ERROR: {e}")
+from .models import NewsArticle
+
+
+def share_article(request, slug):
+    article = get_object_or_404(
+        NewsArticle,
+        slug=slug,
+        status="published"
+    )
+
+    # IMPORTANT: frontend dev URL (IP based)
+    frontend_url = f"http://13.204.210.113:5173/article/{article.slug}"
+
+    context = {
+        "title": article.seo_title or article.title,
+        "description": article.seo_description or article.summary,
+        "image": article.featured_image.url if article.featured_image else "",
+        "url": frontend_url,
+    }
+
+    html = render_to_string("share_article.html", context)
+    return HttpResponse(html)

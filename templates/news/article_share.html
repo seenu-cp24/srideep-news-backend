@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+
+  <title>{{ article.title }}</title>
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="{{ article.title }}" />
+  <meta property="og:description" content="{{ article.summary }}" />
+  <meta property="og:image" content="{{ article.featured_image.url }}" />
+  <meta property="og:url" content="https://srideepcomputers.com/article/{{ article.slug }}" />
+  <meta property="og:type" content="article" />
+
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary_large_image" />
+</head>
+
+<body>
+  Redirecting...
+  <script>
+    window.location.href = "https://srideepcomputers.com/article/{{ article.slug }}";
+  </script>
+</body>
+</html>

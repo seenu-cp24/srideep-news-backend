@@ -1,16 +1,6 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from .models import NewsArticle, GalleryImage
-
-
-# ----------------------------
-# GALLERY INLINE
-# ----------------------------
-class GalleryImageInline(admin.TabularInline):
-    model = GalleryImage
-    extra = 1
-    fields = ("image", "caption", "order")
-    ordering = ("order",)
+from .models import NewsArticle
 
 
 @admin.register(NewsArticle)
@@ -26,8 +16,6 @@ class NewsAdmin(admin.ModelAdmin):
     search_fields = ("title", "summary")
     prepopulated_fields = {"slug": ("title",)}
     ordering = ("-published_at",)
-
-    inlines = [GalleryImageInline]   # ✅ IMPORTANT
 
     def status_badge(self, obj):
         color_map = {
@@ -56,7 +44,9 @@ class NewsAdmin(admin.ModelAdmin):
 
         role = request.user.author_profile.role
 
-        if role in ["admin", "editor"]:
+        if role == "admin":
+            return True
+        if role == "editor":
             return True
         if role == "reporter":
             return False
@@ -66,14 +56,17 @@ class NewsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         if not hasattr(request.user, "author_profile"):
             return False
+
         return request.user.author_profile.role == "admin"
 
     def save_model(self, request, obj, form, change):
         author = request.user.author_profile
 
+        # Reporter → force draft
         if author.role == "reporter":
             obj.status = "draft"
 
+        # Auto-assign author if missing
         if not obj.author_id:
             obj.author = author
 
