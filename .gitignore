@@ -1,24 +1,8 @@
-# Python
-__pycache__/
-*.pyc
-
-# Virtual environment
 venv/
-
-# Environment variables
-.env
-
-# Django files
+__pycache__/
 db.sqlite3
-
-# Local uploads (we use S3 instead)
+*.tar.gz
+.env
+.env.*
 media/
-*.txt
-
-# OS files
-.DS_Store
-
-# Gunicorn runtime files
-*.sock
-*.log
-run/
+staticfiles/
